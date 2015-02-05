@@ -21,7 +21,7 @@ router.post('/', function(req, res) {
   opentok.createSession(function(err, session) {
     if (err) {
       logger.error('Error creating opentok session. Error: ', err);
-      return res.send(500);
+      return res.sendStatus(500);
     };
     Room.create({sessionId: session.sessionId}, function(err, room) {
       if(err) {
