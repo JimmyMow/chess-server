@@ -54,6 +54,14 @@ io.sockets.on('connection', function (socket) {
     engine.stopCommand();
   });
 
+  socket.on('turn off diagram mode', function() {
+    socket.broadcast.to(socket.room).emit('turnDiagramModeOff');
+  });
+
+  socket.on('turn on diagram mode', function() {
+    socket.broadcast.to(socket.room).emit('turnDiagramModeOn');
+  });
+
   socket.on('startingGameOver', function() {
     socket.broadcast.to(socket.room).emit('startGameOver');
     console.log('Stopping analysis');
