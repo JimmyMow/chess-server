@@ -40,6 +40,13 @@ io.sockets.on('connection', function (socket) {
     socket.join(room);
     socket.room = room;
     io.sockets.emit('roomConnected', {room: room});
+    var clients = findClientsSocket(room);
+    if (clients.length > 0) {
+      var socketId = clients[0].id;
+      var mySocketId = socket.id;
+      console.log("RANDOM CLIENT ID: ", socketId);
+      io.sockets.connected[socketId].emit('canIhaveYourGameData', { socketId: mySocketId });
+    }
     engine.stopCommand();
   });
 
@@ -52,6 +59,12 @@ io.sockets.on('connection', function (socket) {
     }
     io.sockets.emit('roomDisconnected');
     engine.stopCommand();
+  });
+
+  socket.on('update client', function(data) {
+    console.log("DATA: ", data);
+    var socketId = data.socketId;
+    io.sockets.connected[socketId].emit('getUpdated', { history: data.gameHistory });
   });
 
   socket.on('turn off diagram mode', function() {
@@ -74,6 +87,49 @@ io.sockets.on('connection', function (socket) {
     socket.broadcast.to(socket.room).emit('startGameOver');
     console.log('Stopping analysis');
     engine.stopCommand();
+  });
+
+  socket.on('start analyzing', function(data) {
+    console.log("ABOUT TO ANALYZE WITH ONLY FEN HOPEFULLY");
+    var fen = data.fen;
+
+    engine.stopCommand();
+    engine.positionCommand(fen).then(function () {
+      console.log('Starting position set');
+      console.log('Starting analysis');
+      return engine.goInfiniteCommand(function infoHandler(info) {
+          var score = null;
+          var depth = null;
+          var nps = null;
+          var variation = null;
+          var bestmove = null;
+          var match = info.match(/^info .*\bdepth (\d+) .*\bnps (\d+)/);
+          if (match) {
+              depth = match[1];
+              nps = 'Nps: ' + match[2];
+          }
+          if (match = info.match(/^info .*\bscore (\w+) (-?\d+)/)) {
+              score = parseInt(match[2]);
+              if (match[1] == 'cp') {
+                  score = (score / 100.0).toFixed(2);
+              } else if(match[1] == 'mate') {
+                  score = '#' + score;
+              }
+              if(match = info.match(/\b(upper|lower)bound\b/)) {
+                  // console.log("Match: ", match);
+                  // console.log(((match[1] == 'upper') == (game.turn() == 'w') ? '<= ' : '>= ') + engineStatus.score);
+              }
+          }
+          if (match = info.match(/^info .*\bpv ([a-z0-9\s]+)/)) {
+              variation = match[1];
+          }
+          if (match = info.match(/^info .*\bcurrmove ([a-z0-9\s]+) .*\bcurrmovenumber (1$)/)) {
+              bestmove = match[1];
+          }
+          var engineData = {score: score, depth: depth, nps: nps, bestmove: bestmove, variation: variation};
+          io.sockets.in(socket.room).emit('engineData', engineData);
+      });
+    });
   });
 
   socket.on('sendPosition', function(obj) {
@@ -121,4 +177,24 @@ io.sockets.on('connection', function (socket) {
     });
   });
 });
+
+// Find clients connected to a room
+function findClientsSocket(roomId, namespace) {
+    var res = []
+    , ns = io.of(namespace ||"/");    // the default namespace is "/"
+
+    if (ns) {
+        for (var id in ns.connected) {
+            if(roomId) {
+                var index = ns.connected[id].rooms.indexOf(roomId) ;
+                if(index !== -1) {
+                    res.push(ns.connected[id]);
+                }
+            } else {
+                res.push(ns.connected[id]);
+            }
+        }
+    }
+    return res;
+}
 
