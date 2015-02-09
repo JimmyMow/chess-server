@@ -12,8 +12,6 @@ connection.once('open', function() {
   });
 });
 
-var io = require('socket.io').listen(server);
-
 var Engine = require('uci');
 var engine = new Engine("stockfish");
 
