@@ -64,7 +64,7 @@ io.sockets.on('connection', function (socket) {
   socket.on('update client', function(data) {
     console.log("DATA: ", data);
     var socketId = data.socketId;
-    io.sockets.connected[socketId].emit('getUpdated', { history: data.gameHistory });
+    io.sockets.connected[socketId].emit('getUpdated', { history: data.gameHistory, analysisOn: data.analysisOn, squares: data.squares });
   });
 
   socket.on('turn off diagram mode', function() {
@@ -90,91 +90,24 @@ io.sockets.on('connection', function (socket) {
   });
 
   socket.on('start analyzing', function(data) {
-    console.log("ABOUT TO ANALYZE WITH ONLY FEN HOPEFULLY");
     var fen = data.fen;
-
-    engine.stopCommand();
-    engine.positionCommand(fen).then(function () {
-      console.log('Starting position set');
-      console.log('Starting analysis');
-      return engine.goInfiniteCommand(function infoHandler(info) {
-          var score = null;
-          var depth = null;
-          var nps = null;
-          var variation = null;
-          var bestmove = null;
-          var match = info.match(/^info .*\bdepth (\d+) .*\bnps (\d+)/);
-          if (match) {
-              depth = match[1];
-              nps = 'Nps: ' + match[2];
-          }
-          if (match = info.match(/^info .*\bscore (\w+) (-?\d+)/)) {
-              score = parseInt(match[2]);
-              if (match[1] == 'cp') {
-                  score = (score / 100.0).toFixed(2);
-              } else if(match[1] == 'mate') {
-                  score = '#' + score;
-              }
-              if(match = info.match(/\b(upper|lower)bound\b/)) {
-                  // console.log("Match: ", match);
-                  // console.log(((match[1] == 'upper') == (game.turn() == 'w') ? '<= ' : '>= ') + engineStatus.score);
-              }
-          }
-          if (match = info.match(/^info .*\bpv ([a-z0-9\s]+)/)) {
-              variation = match[1];
-          }
-          if (match = info.match(/^info .*\bcurrmove ([a-z0-9\s]+) .*\bcurrmovenumber (1$)/)) {
-              bestmove = match[1];
-          }
-          var engineData = {score: score, depth: depth, nps: nps, bestmove: bestmove, variation: variation};
-          io.sockets.in(socket.room).emit('engineData', engineData);
-      });
-    });
+    io.sockets.in(socket.room).emit('stockfishOn');
+    stockfishAnalysis(fen, socket);
   });
 
-  socket.on('sendPosition', function(obj) {
-    socket.broadcast.to(socket.room).emit('changePosition', obj);
-    var fen = obj.fen;
-    var move = obj.from+obj.to;
-    // Stop Engine
-    console.log('Stopping analysis');
+  socket.on('stop analyzing', function() {
+    console.log('Stopping analysis. Turning Stockfish off.');
     engine.stopCommand();
-    engine.positionCommand(fen, move).then(function () {
-      console.log('Starting position set');
-      console.log('Starting analysis');
-      return engine.goInfiniteCommand(function infoHandler(info) {
-          var score = null;
-          var depth = null;
-          var nps = null;
-          var variation = null;
-          var bestmove = null;
-          var match = info.match(/^info .*\bdepth (\d+) .*\bnps (\d+)/);
-          if (match) {
-              depth = match[1];
-              nps = 'Nps: ' + match[2];
-          }
-          if (match = info.match(/^info .*\bscore (\w+) (-?\d+)/)) {
-              score = parseInt(match[2]);
-              if (match[1] == 'cp') {
-                  score = (score / 100.0).toFixed(2);
-              } else if(match[1] == 'mate') {
-                  score = '#' + score;
-              }
-              if(match = info.match(/\b(upper|lower)bound\b/)) {
-                  // console.log("Match: ", match);
-                  // console.log(((match[1] == 'upper') == (game.turn() == 'w') ? '<= ' : '>= ') + engineStatus.score);
-              }
-          }
-          if (match = info.match(/^info .*\bpv ([a-z0-9\s]+)/)) {
-              variation = match[1];
-          }
-          if (match = info.match(/^info .*\bcurrmove ([a-z0-9\s]+) .*\bcurrmovenumber (1$)/)) {
-              bestmove = match[1];
-          }
-          var engineData = {score: score, depth: depth, nps: nps, bestmove: bestmove, variation: variation};
-          io.sockets.in(socket.room).emit('engineData', engineData);
-      });
-    });
+    io.sockets.in(socket.room).emit('stockfishOff');
+  });
+
+  socket.on('sendPosition', function(data) {
+    console.log(data);
+    socket.broadcast.to(socket.room).emit('changePosition', data);
+    var fen = data.fen;
+    if (data.stockfish) {
+      stockfishAnalysis(fen, socket);
+    }
   });
 });
 
@@ -198,3 +131,45 @@ function findClientsSocket(roomId, namespace) {
     return res;
 }
 
+// Perform Stockfish analysis
+
+function stockfishAnalysis(fen, socket) {
+  console.log('Stopping analysis');
+  engine.stopCommand();
+  engine.positionCommand(fen).then(function () {
+    console.log('Starting position set');
+    console.log('Starting analysis');
+    return engine.goInfiniteCommand(function infoHandler(info) {
+      var score = null;
+      var depth = null;
+      var nps = null;
+      var variation = null;
+      var bestmove = null;
+      var match = info.match(/^info .*\bdepth (\d+) .*\bnps (\d+)/);
+      if (match) {
+          depth = match[1];
+          nps = 'Nps: ' + match[2];
+      }
+      if (match = info.match(/^info .*\bscore (\w+) (-?\d+)/)) {
+          score = parseInt(match[2]);
+          if (match[1] == 'cp') {
+              score = (score / 100.0).toFixed(2);
+          } else if(match[1] == 'mate') {
+              score = '#' + score;
+          }
+          if(match = info.match(/\b(upper|lower)bound\b/)) {
+              // console.log("Match: ", match);
+              // console.log(((match[1] == 'upper') == (game.turn() == 'w') ? '<= ' : '>= ') + engineStatus.score);
+          }
+      }
+      if (match = info.match(/^info .*\bpv ([a-z0-9\s]+)/)) {
+          variation = match[1];
+      }
+      if (match = info.match(/^info .*\bcurrmove ([a-z0-9\s]+) .*\bcurrmovenumber (1$)/)) {
+          bestmove = match[1];
+      }
+      var engineData = {score: score, depth: depth, nps: nps, bestmove: bestmove, variation: variation};
+      io.sockets.in(socket.room).emit('engineData', engineData);
+    });
+  });
+}
