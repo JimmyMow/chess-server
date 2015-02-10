@@ -42,7 +42,6 @@ io.sockets.on('connection', function (socket) {
     if (clients.length > 0) {
       var socketId = clients[0].id;
       var mySocketId = socket.id;
-      console.log("RANDOM CLIENT ID: ", socketId);
       io.sockets.connected[socketId].emit('canIhaveYourGameData', { socketId: mySocketId });
     }
     engine.stopCommand();
@@ -55,12 +54,11 @@ io.sockets.on('connection', function (socket) {
       console.log("Leaving room: ", room);
       socket.room = undefined;
     }
-    io.sockets.emit('roomDisconnected');
+    io.sockets.emit('roomDisconnected', {room: room});
     engine.stopCommand();
   });
 
   socket.on('update client', function(data) {
-    console.log("DATA: ", data);
     var socketId = data.socketId;
     io.sockets.connected[socketId].emit('getUpdated', { history: data.gameHistory, analysisOn: data.analysisOn, squares: data.squares });
   });
@@ -106,6 +104,10 @@ io.sockets.on('connection', function (socket) {
     if (data.stockfish) {
       stockfishAnalysis(fen, socket);
     }
+  });
+
+  socket.on('undo move', function() {
+    socket.broadcast.to(socket.room).emit('undoMove');
   });
 });
 
