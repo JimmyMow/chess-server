@@ -54,13 +54,13 @@ io.sockets.on('connection', function (socket) {
       console.log("Leaving room: ", room);
       socket.room = undefined;
     }
-    io.sockets.emit('roomDisconnected', {room: room});
+    io.sockets.emit('roomDisconnected', { room: "hi" });
     engine.stopCommand();
   });
 
   socket.on('update client', function(data) {
     var socketId = data.socketId;
-    io.sockets.connected[socketId].emit('getUpdated', { history: data.gameHistory, analysisOn: data.analysisOn, squares: data.squares });
+    io.sockets.connected[socketId].emit('getUpdated', data);
   });
 
   socket.on('turn off diagram mode', function() {
@@ -85,6 +85,12 @@ io.sockets.on('connection', function (socket) {
     engine.stopCommand();
   });
 
+  socket.on('startPos', function() {
+    socket.broadcast.to(socket.room).emit('startPos');
+    console.log('Stopping analysis');
+    engine.stopCommand();
+  });
+
   socket.on('start analyzing', function(data) {
     var fen = data.fen;
     io.sockets.in(socket.room).emit('stockfishOn');
@@ -100,7 +106,7 @@ io.sockets.on('connection', function (socket) {
   socket.on('sendPosition', function(data) {
     console.log(data);
     socket.broadcast.to(socket.room).emit('changePosition', data);
-    var fen = data.fen;
+    var fen = data.gameFen;
     if (data.stockfish) {
       stockfishAnalysis(fen, socket);
     }
