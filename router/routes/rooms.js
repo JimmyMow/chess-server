@@ -13,6 +13,7 @@ router.get('/:id', function(req, res) {
     if(err) {
       return res.sendStatus(500);
     }
+    console.log("room: ", room);
     res.send({ room: room.emberRoom() });
   });
 });
