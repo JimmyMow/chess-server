@@ -104,7 +104,6 @@ io.sockets.on('connection', function (socket) {
   });
 
   socket.on('sendPosition', function(data) {
-    console.log(data);
     socket.broadcast.to(socket.room).emit('changePosition', data);
     var fen = data.gameFen;
     if (data.stockfish) {
@@ -114,6 +113,10 @@ io.sockets.on('connection', function (socket) {
 
   socket.on('undo move', function() {
     socket.broadcast.to(socket.room).emit('undoMove');
+  });
+
+  socket.on('upload pgn', function(data) {
+    socket.broadcast.to(socket.room).emit('uploadTheirPgn', data);
   });
 });
 
