@@ -30,11 +30,11 @@ io.sockets.on('connection', function (socket) {
   socket.on('join room', function(data) {
     var room = data.room;
     if (socket.room) {
-      console.log("Leaving room: ", room);
+      console.log("Leaving room");
       socket.leave(room);
       socket.room = undefined;
     }
-    console.log("Joining room: ", room);
+    console.log("Joining room");
     socket.join(room);
     socket.room = room;
     io.sockets.emit('roomConnected', {room: room});
@@ -51,7 +51,7 @@ io.sockets.on('connection', function (socket) {
     if (socket.room) {
       var room = socket.room;
       socket.leave(room);
-      console.log("Leaving room: ", room);
+      console.log("Leaving room");
       socket.room = undefined;
     }
     io.sockets.emit('roomDisconnected', { room: "hi" });
@@ -117,6 +117,18 @@ io.sockets.on('connection', function (socket) {
 
   socket.on('upload pgn', function(data) {
     socket.broadcast.to(socket.room).emit('uploadTheirPgn', data);
+  });
+
+  socket.on('sandbox mode clicked', function() {
+    socket.broadcast.to(socket.room).emit('sandboxModeClicked');
+  });
+
+  socket.on('sandbox position', function(data) {
+    socket.broadcast.to(socket.room).emit('sandboxPositionChanged', data);
+  });
+
+  socket.on('clear board', function() {
+    socket.broadcast.to(socket.room).emit('sandboxClearBoard');
   });
 });
 
