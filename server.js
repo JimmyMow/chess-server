@@ -127,6 +127,10 @@ io.sockets.on('connection', function (socket) {
     socket.broadcast.to(socket.room).emit('sandboxPositionChanged', data);
   });
 
+  socket.on('starting pos', function() {
+    socket.broadcast.to(socket.room).emit('sandboxStartingPos');
+  });
+
   socket.on('clear board', function() {
     socket.broadcast.to(socket.room).emit('sandboxClearBoard');
   });
