@@ -123,8 +123,8 @@ io.sockets.on('connection', function (socket) {
     socket.broadcast.to(socket.room).emit('sandboxModeClicked');
   });
 
-  socket.on('sandbox mode clicked with pos', function() {
-    socket.broadcast.to(socket.room).emit('sandboxModeClickedWithPosition');
+  socket.on('sandbox mode clicked with pos', function(data) {
+    socket.broadcast.to(socket.room).emit('sandboxModeClickedWithPosition', data);
   });
 
   socket.on('sandbox position', function(data) {
