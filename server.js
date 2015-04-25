@@ -111,6 +111,10 @@ io.sockets.on('connection', function (socket) {
     }
   });
 
+  socket.on('send note', function(data) {
+    socket.broadcast.to(socket.room).emit('addNewNote', data);
+  });
+
   socket.on('undo move', function() {
     socket.broadcast.to(socket.room).emit('undoMove');
   });
