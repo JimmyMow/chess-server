@@ -63,20 +63,13 @@ io.sockets.on('connection', function (socket) {
     io.sockets.connected[socketId].emit('getUpdated', data);
   });
 
-  socket.on('turn off diagram mode', function() {
-    socket.broadcast.to(socket.room).emit('turnDiagramModeOff');
+  socket.on('send points', function(data) {
+    console.log(data);
+    socket.broadcast.to(socket.room).emit('addPointsForOthers', data);
   });
 
-  socket.on('turn on diagram mode', function() {
-    socket.broadcast.to(socket.room).emit('turnDiagramModeOn');
-  });
-
-  socket.on('send diagram', function(data) {
-    socket.broadcast.to(socket.room).emit('drawForOthers', data);
-  });
-
-  socket.on('clear diagram', function() {
-    socket.broadcast.to(socket.room).emit('clearDiagram');
+  socket.on('remove points', function() {
+    socket.broadcast.to(socket.room).emit('removePointsForOthers');
   });
 
   socket.on('startingGameOver', function() {
