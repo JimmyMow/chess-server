@@ -1,3 +1,4 @@
+var passport = require('../middleware/authentication');
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
 var session = require('express-session');
@@ -10,4 +11,6 @@ module.exports = function(app) {
     resave: false,
     saveUninitialized: true
   }));
+  app.use(passport.initialize());
+  app.use(passport.session());
 };
