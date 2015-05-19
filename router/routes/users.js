@@ -3,23 +3,27 @@ var router = express.Router();
 var logger = require('nlogger').logger(module);
 var connection = require('../../database/database');
 var User = connection.model('User');
+var Puzzle = connection.model('Puzzle');
 var apiKey = '44827272';
 var secret = 'fb27ffafec7f84cfcd2da58bcf6b3565b204b6d0';
 var OpenTok = require('opentok');
 var opentok = new OpenTok(apiKey, secret);
 var passport = require('../../middleware/authentication');
+var checkForAuthentication = require('../../middleware/ensureAuth');
 
 router.get('/:id', function(req, res) {
   User.findOne({"id": req.params.id}, function(err, user) {
     if(err) {
-      return res.sendStatus(404);
       logger.error('User not found. User id:', req.params.id);
+      return res.sendStatus(404);
     }
     if(!user) {
-      return res.sendStatus(404);
       logger.error('User not found. User id:', req.params.id);
+      return res.sendStatus(404);
     }
-    return res.send({ user: user.emberUser() });
+    user.emberUser(function(emberUser) {
+      return res.send({ user: emberUser });
+    });
   });
 });
 
@@ -31,6 +35,26 @@ router.get('/', function(req, res) {
     default:
       res.sendStatus(400);
   }
+});
+
+router.put('/:id', checkForAuthentication, function(req, res) {
+  console.log("user: ", req.body.user);
+  var query = { "email": req.body.user.email };
+  var update = { roomsecret: req.body.user.roomsecret };
+  User.findOneAndUpdate( query, update, function(err, user) {
+    if (err) {
+      logger.error('Could not update user. User id:', req.body.user.id);
+      return res.sendStatus(500);
+    }
+    if (!user) {
+      logger.error('Could not find user. User id:', req.body.user.id);
+      return res.sendStatus(404);
+    }
+    console.log(user);
+    user.emberUser(function(emberUser) {
+      return res.send({ user: emberUser });
+    });
+  });
 });
 
 router.post('/', function(req, res) {
@@ -47,7 +71,9 @@ module.exports = router;
 
 function handleCheckAuthRequest(req, res){
   if( req.isAuthenticated() ) {
-    return res.send({ users: [req.user.emberUser()] });
+    req.user.emberUser(function(emberUser) {
+      return res.send({ users: [emberUser] });
+    });
   } else {
     return res.send({ users: [] });
   }
@@ -68,15 +94,19 @@ function handleLogin(req, res) {
         return res.sendStatus(500);
         logger.error('Could not log in session:', err);
       }
-      return res.send({ user: user.emberUser() });
+      user.emberUser(function(emberUser) {
+        return res.send({ user: emberUser });
+      });
     });
   })(req, res);
 }
 
 function handleSignup(req, res) {
+  console.log("params: ", req.body.user.roomsecret);
   var user = new User({
     id: req.body.user.id,
-    email: req.body.user.email
+    email: req.body.user.email,
+    roomsecret: req.body.user.roomsecret
   });
   opentok.createSession(function(err, session) {
     if (err) {
@@ -84,7 +114,7 @@ function handleSignup(req, res) {
       return res.sendStatus(500);
     }
     user.sessionId = session.sessionId;
-
+    console.log("user: ", user);
     User.createUser(user, req.body.user.password, function(err, user) {
       if(err) {
         logger.error('Could not create user:', err);
@@ -114,7 +144,9 @@ function handleSignup(req, res) {
             }
           });
         }
-        return res.send({ user: user.emberUser() });
+        user.emberUser(function(emberUser) {
+          return res.send({ user: emberUser });
+        });
       });
     });
 

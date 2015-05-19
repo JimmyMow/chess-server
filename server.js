@@ -124,6 +124,10 @@ io.sockets.on('connection', function (socket) {
     socket.broadcast.to(socket.room).emit('sandboxModeClickedWithPosition', data);
   });
 
+  socket.on('puzzle clicked', function(data) {
+    socket.broadcast.to(socket.room).emit('getThePuzzleClicked', data);
+  });
+
   socket.on('sandbox position', function(data) {
     socket.broadcast.to(socket.room).emit('sandboxPositionChanged', data);
   });
