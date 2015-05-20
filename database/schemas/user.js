@@ -44,7 +44,6 @@ userSchema.methods.emberUser = function(done) {
     newUser.puzzles = res;
     return done(newUser);
   });
-
 };
 
 userSchema.methods.findPuzzles = function(done) {

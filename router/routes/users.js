@@ -50,7 +50,6 @@ router.put('/:id', checkForAuthentication, function(req, res) {
       logger.error('Could not find user. User id:', req.body.user.id);
       return res.sendStatus(404);
     }
-    console.log(user);
     user.emberUser(function(emberUser) {
       return res.send({ user: emberUser });
     });
