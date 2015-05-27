@@ -28,7 +28,11 @@ var userSchema = new Schema({
     type: String,
     required: true
   },
-  sessionId: String
+  sessionId: String,
+  about: String,
+  rating: String,
+  location: String,
+  name: String
 });
 
 userSchema.methods.emberUser = function(done) {
@@ -40,6 +44,13 @@ userSchema.methods.emberUser = function(done) {
   newUser.email = user.email;
   newUser.token = token;
   newUser.roomsecret = user.roomsecret;
+  newUser.name = user.name;
+  newUser.about = user.about;
+  newUser.location = user.location;
+  newUser.location = user.location;
+  newUser.rating = user.rating;
+  newUser.created_at = user.created_at;
+  newUser.updated_at = user.updated_at;
   this.findPuzzles(function(res) {
     newUser.puzzles = res;
     return done(newUser);

@@ -1,6 +1,7 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
+
 var puzzleSchema = new Schema({
   position: {
     type: String,
@@ -25,7 +26,9 @@ puzzleSchema.methods.emberPuzzle = function() {
     name: this.name,
     position: this.position,
     user: this.user,
-    gameFen: this.gameFen
+    gameFen: this.gameFen,
+    created_at: this.created_at,
+    updated_at: this.updated_at
   };
 
   return newPuzzle;

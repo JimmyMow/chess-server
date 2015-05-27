@@ -14,7 +14,9 @@ roomSchema.methods.emberRoom = function() {
   var emberRoom =  {
     _id: this._id,
     sessionId: this.sessionId,
-    token: token
+    token: token,
+    created_at: this.created_at,
+    updated_at: this.updated_at
   };
 
   return emberRoom;

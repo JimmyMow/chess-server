@@ -6,12 +6,14 @@ var Puzzle = connection.model('Puzzle');
 
 router.get('/', function(req, res) {
   var query = req.query;
+  console.log("query: ", query);
   var fields = {};
   Puzzle.find({ $query: { user: query.user }, $orderby: { _id : -1 } }, fields, { skip: query.skip, limit: 5 }, function(err, puzzles) {
     if(err) {
       return res.sendStatus(500);
       logger.error('Could not find puzzle:', err);
     }
+    console.log("puzzles: ", puzzles);
     return res.send( { puzzles: puzzles } );
   });
 });
