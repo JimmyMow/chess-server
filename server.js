@@ -141,6 +141,7 @@ io.sockets.on('connection', function (socket) {
   });
 });
 
+
 // Find clients connected to a room
 function findClientsSocket(roomId, namespace) {
     var res = []
