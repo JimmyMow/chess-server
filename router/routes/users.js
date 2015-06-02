@@ -40,25 +40,19 @@ router.get('/', function(req, res) {
 router.put('/:id', checkForAuthentication, function(req, res) {
   var query = { "sessionId": req.body.user.sessionId };
   var userParams = req.body.user;
-  console.log("before: ", userParams);
   delete userParams.password;
   delete userParams.meta;
   delete userParams.token;
-  console.log("after: ", userParams);
   User.findOneAndUpdate( query, userParams, function(err, user) {
-    console.log("HERERERE");
     if (err) {
-      console.log("here with err: ", err);
       logger.error('Could not update user. User id:', req.body.user.id);
       return res.sendStatus(500);
     }
     if (!user) {
-      console.log("here with no user");
       logger.error('Could not find user. User id:', req.body.user.id);
       return res.sendStatus(404);
     }
     user.emberUser(function(emberUser) {
-      console.log("Yo: ", emberUser);
       return res.send({ user: emberUser });
     });
   });

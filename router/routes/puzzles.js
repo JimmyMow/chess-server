@@ -30,8 +30,25 @@ router.get('/:id', function(req, res) {
   });
 });
 
+router.put('/:id', function(req, res) {
+  var query = { "_id": req.params.id };
+  var puzzleParams = req.body.puzzle;
+
+  Puzzle.findOneAndUpdate( query, puzzleParams, function(err, puzzle) {
+    if (err) {
+      logger.error('Could not update puzzle. Puzzle id:', req.params.id);
+      return res.sendStatus(500);
+    }
+    if (!puzzle) {
+      logger.error('Could not find puzzle. Puzzle id:', req.params.id);
+      return res.sendStatus(404);
+    }
+
+    return res.send({ puzzle: puzzle.emberPuzzle() });
+  });
+});
+
 router.post('/', function(req, res) {
-  console.log(req.body.puzzle);
   Puzzle.create(req.body.puzzle, function(err, puzzle) {
     if (err) {
       logger.error('Error creating puzzle. Error: ', err);
