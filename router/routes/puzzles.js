@@ -58,4 +58,18 @@ router.post('/', function(req, res) {
   });
 });
 
+router.delete('/:id', function(req, res) {
+  var puzzleId = req.params.id;
+  console.log("here with: ", puzzleId);
+  Puzzle.findByIdAndRemove(puzzleId, function(err, result) {
+    if(err) {
+      console.log("error!: ", err);
+      return res.sendStatus(500);
+      logger.error('Could not find or remove puzzle. Puzzle id:', puzzleId);
+    }
+    console.log("shouldve deleted");
+    return res.send({});
+  });
+});
+
 module.exports = router;
