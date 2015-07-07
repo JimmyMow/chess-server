@@ -1,7 +1,9 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 var puzzleSchema = require('./puzzle');
+var gameSchema = require('./game');
 var Puzzle = mongoose.connection.model('Puzzle', puzzleSchema);
+var Game = mongoose.connection.model('Game', gameSchema);
 var apiKey = '44827272';
 var secret = 'fb27ffafec7f84cfcd2da58bcf6b3565b204b6d0';
 var OpenTok = require('opentok');
@@ -47,18 +49,32 @@ userSchema.methods.emberUser = function(done) {
   newUser.name = user.name;
   newUser.about = user.about;
   newUser.location = user.location;
-  newUser.location = user.location;
   newUser.rating = user.rating;
   newUser.created_at = user.created_at;
   newUser.updated_at = user.updated_at;
   this.findPuzzles(function(res) {
     newUser.puzzles = res;
-    return done(newUser);
+    user.findGames(function(res) {
+      newUser.games = res;
+      return done(newUser);
+    });
   });
 };
 
 userSchema.methods.findPuzzles = function(done) {
   Puzzle.aggregate([ { $match : { user: 'jimmymow' } }, { $group : {_id : '$_id' } },{ $limit : 5 }, { $sort : { _id : -1 } } ], function(err, res) {
+    if (err) {
+      return done([]);
+    }
+    var _ids = res.map(function(obj) {
+      return obj._id;
+    });
+    return done(_ids);
+  });
+};
+
+userSchema.methods.findGames = function(done) {
+  Game.aggregate([ { $match : { user: 'jimmymow' } }, { $group : {_id : '$_id' } },{ $limit : 5 }, { $sort : { _id : -1 } } ], function(err, res) {
     if (err) {
       return done([]);
     }

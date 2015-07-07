@@ -3,6 +3,7 @@ var router = express.Router();
 var logger = require('nlogger').logger(module);
 var connection = require('../../database/database');
 var Puzzle = connection.model('Puzzle');
+var checkForAuthentication = require('../../middleware/ensureAuth');
 
 router.get('/', function(req, res) {
   var query = req.query;
@@ -19,6 +20,7 @@ router.get('/', function(req, res) {
 });
 
 router.get('/:id', function(req, res) {
+  console.log("here getting a puzzle");
   var id = req.params.id;
   Puzzle.findOne( { _id : id }, function(err, puzzle) {
     if(err) {
@@ -30,7 +32,7 @@ router.get('/:id', function(req, res) {
   });
 });
 
-router.put('/:id', function(req, res) {
+router.put('/:id', checkForAuthentication, function(req, res) {
   var query = { "_id": req.params.id };
   var puzzleParams = req.body.puzzle;
 
@@ -48,7 +50,7 @@ router.put('/:id', function(req, res) {
   });
 });
 
-router.post('/', function(req, res) {
+router.post('/', checkForAuthentication, function(req, res) {
   Puzzle.create(req.body.puzzle, function(err, puzzle) {
     if (err) {
       logger.error('Error creating puzzle. Error: ', err);
